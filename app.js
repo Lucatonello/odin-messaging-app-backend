@@ -4,14 +4,14 @@ const app = express();
 const { Pool } = require('pg');
 const cors = require('cors');
 const PORT = process.env.PORT || 3000;
-const router = require('./routes/Index');
+const indexRoute = require('./routes/index');
+const { router } = require('./routes/users');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/', router);
+app.use('/users', router);
+app.use('/', indexRoute);
 
 app.listen(PORT, () => console.log('server running on port', PORT));
-
-module.exports = app;
