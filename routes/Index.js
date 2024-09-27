@@ -25,7 +25,7 @@ router.get('/chat/:contactid', verifyToken, async (req, res) => {
 
     try {
         const chat = await pool.query(`
-            SELECT messages.id, messages.text, messages.sentat, users.username AS sender_name FROM messages
+            SELECT messages.id, messages.text, messages.sentat, users.username, users.id AS sender_id FROM messages
             JOIN users ON messages.senderid = users.id
             WHERE (messages.senderid = $1 AND messages.recieverid = $2)
             OR (messages.senderid = $2 AND messages.recieverid = $1)
@@ -39,4 +39,16 @@ router.get('/chat/:contactid', verifyToken, async (req, res) => {
     }
 });
 
+
+router.post('/newMessage/:senderid/:recieverid', verifyToken, async (req, res) => {
+    const newMessage = req.body.newMessage;
+    const senderid = req.params.senderid;
+    const recieverid = req.params.recieverid;
+
+    await pool.query(`
+        INSERT INTO messages 
+        (text, senderid, recieverid)
+        VALUES ($1, $2, $3)
+    `, [newMessage, senderid, recieverid]);
+})
 module.exports = router;
