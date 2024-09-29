@@ -45,10 +45,32 @@ router.post('/newMessage/:senderid/:recieverid', verifyToken, async (req, res) =
     const senderid = req.params.senderid;
     const recieverid = req.params.recieverid;
 
-    await pool.query(`
-        INSERT INTO messages 
-        (text, senderid, recieverid)
-        VALUES ($1, $2, $3)
-    `, [newMessage, senderid, recieverid]);
-})
+    try {
+        await pool.query(`
+            INSERT INTO messages 
+            (text, senderid, recieverid)
+            VALUES ($1, $2, $3)
+        `, [newMessage, senderid, recieverid]);
+
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Server error' });;
+    }
+   
+});
 module.exports = router;
+
+router.get('/profiles/:id', verifyToken, async (req, res) => {
+    const userid = req.params.id;
+    try {
+        const result = await pool.query(`
+            SELECT username, bio, profilepic, joindate, number 
+            FROM users
+            WHERE id = $1
+        `, [userid]);
+        
+        res.send(result.rows);
+    } catch (err) {
+        console.log(err);
+    }
+});
