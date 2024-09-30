@@ -25,11 +25,17 @@ router.get('/chat/:contactid', verifyToken, async (req, res) => {
 
     try {
         const chat = await pool.query(`
-            SELECT messages.id, messages.text, messages.sentat, users.username, users.id AS sender_id FROM messages
-            JOIN users ON messages.senderid = users.id
+            SELECT messages.id, messages.text, messages.sentat, 
+            sender.username AS sender_username, 
+            receiver.username AS receiver_username, 
+            messages.senderid, messages.recieverid
+            FROM messages
+            JOIN users AS sender ON messages.senderid = sender.id
+            JOIN users AS receiver ON messages.recieverid = receiver.id
             WHERE (messages.senderid = $1 AND messages.recieverid = $2)
             OR (messages.senderid = $2 AND messages.recieverid = $1)
-            ORDER BY messages.sentat
+            ORDER BY messages.sentat;
+
         `, [userId, contactId]);
         
         res.json(chat.rows);
@@ -58,7 +64,6 @@ router.post('/newMessage/:senderid/:recieverid', verifyToken, async (req, res) =
     }
    
 });
-module.exports = router;
 
 router.get('/profiles/:id', verifyToken, async (req, res) => {
     const userid = req.params.id;
@@ -74,3 +79,41 @@ router.get('/profiles/:id', verifyToken, async (req, res) => {
         console.log(err);
     }
 });
+
+router.post('/getRecieverId', verifyToken, async (req, res) => {
+    const recieverName = req.body.reciever;
+    try {
+        const result = await pool.query(`SELECT id FROM users WHERE username = $1`, [recieverName]);
+        const recieverId = result.rows[0].id;
+        res.json({ id: recieverId });
+    } catch (err) {
+        console.error(err);
+    }
+   
+});
+
+router.put('/editData/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    const type = req.body.type;
+    const newData = req.body.newData;
+
+    try {
+        if (type == 'username') {
+            await pool.query(`
+                UPDATE users
+                SET username = $1
+                WHERE id = $2
+            `, [newUsername, id])
+        } else if (type == 'bio') {
+            await pool.query(`
+                UPDATE users
+                SET bio = $1
+                WHERE id = $2
+            `, [newData, id])
+        }
+    } catch (err) {
+        console.error(err)
+    }
+});
+
+module.exports = router;
