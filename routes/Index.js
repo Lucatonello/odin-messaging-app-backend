@@ -46,17 +46,17 @@ router.get('/chat/:contactid', verifyToken, async (req, res) => {
 });
 
 
-router.post('/newMessage/:senderid/:recieverid', verifyToken, async (req, res) => {
+router.post('/newMessage/:senderid/:receiverid', verifyToken, async (req, res) => {
     const newMessage = req.body.newMessage;
     const senderid = req.params.senderid;
-    const recieverid = req.params.recieverid;
+    const receiverid = req.params.receiverid;
 
     try {
         await pool.query(`
             INSERT INTO messages 
             (text, senderid, recieverid)
             VALUES ($1, $2, $3)
-        `, [newMessage, senderid, recieverid]);
+        `, [newMessage, senderid, receiverid]);
 
     } catch (err) {
         console.error(err)
@@ -80,12 +80,12 @@ router.get('/profiles/:id', verifyToken, async (req, res) => {
     }
 });
 
-router.post('/getRecieverId', verifyToken, async (req, res) => {
-    const recieverName = req.body.reciever;
+router.post('/getReceiverId', verifyToken, async (req, res) => {
+    const receiverName = req.body.receiver;
     try {
-        const result = await pool.query(`SELECT id FROM users WHERE username = $1`, [recieverName]);
-        const recieverId = result.rows[0].id;
-        res.json({ id: recieverId });
+        const result = await pool.query(`SELECT id FROM users WHERE username = $1`, [receiverName]);
+        const receiverId = result.rows[0].id;
+        res.json({ id: receiverId });
     } catch (err) {
         console.error(err);
     }
@@ -114,6 +114,11 @@ router.put('/editData/:id', verifyToken, async (req, res) => {
     } catch (err) {
         console.error(err)
     }
+});
+
+router.get('/getUsers', async (req, res)  => {
+    const users = await pool.query('SELECT id, username FROM users');
+    res.json(users.rows);
 });
 
 module.exports = router;
