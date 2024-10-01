@@ -6,12 +6,13 @@ const { verifyToken } = require('./users');
 router.get('/', verifyToken, async (req, res) => {
     const senderid = req.user.id;
 
+    // const pfp = await pool.query('SELECT profilepic FROM users WHERE id = $1', [senderid]);
     const contacts = await pool.query(`
-        SELECT DISTINCT users.id, users.username FROM users
+        SELECT DISTINCT users.id, users.username, users.profilepic FROM users
         JOIN messages ON users.id = messages.recieverid
         WHERE messages.senderid = $1
         UNION
-        SELECT users.id, users.username FROM users
+        SELECT users.id, users.username, users.profilepic FROM users
         JOIN messages ON users.id = messages.senderid
         WHERE messages.recieverid = $1
     `, [senderid]);
@@ -25,10 +26,16 @@ router.get('/chat/:contactid', verifyToken, async (req, res) => {
 
     try {
         const chat = await pool.query(`
-            SELECT messages.id, messages.text, messages.sentat, 
-            sender.username AS sender_username, 
-            receiver.username AS receiver_username, 
-            messages.senderid, messages.recieverid
+            SELECT 
+                messages.id, 
+                messages.text, 
+                messages.sentat,  
+                sender.username AS sender_username, 
+                sender.profilepic AS sender_profilepic,
+                receiver.username AS receiver_username, 
+                receiver.profilepic AS receiver_profilepic,
+                messages.senderid, 
+                messages.recieverid
             FROM messages
             JOIN users AS sender ON messages.senderid = sender.id
             JOIN users AS receiver ON messages.recieverid = receiver.id
@@ -69,7 +76,7 @@ router.get('/profiles/:id', verifyToken, async (req, res) => {
     const userid = req.params.id;
     try {
         const result = await pool.query(`
-            SELECT username, bio, profilepic, joindate, number 
+            SELECT username, bio, profilepic, joindate 
             FROM users
             WHERE id = $1
         `, [userid]);
@@ -103,7 +110,7 @@ router.put('/editData/:id', verifyToken, async (req, res) => {
                 UPDATE users
                 SET username = $1
                 WHERE id = $2
-            `, [newUsername, id])
+            `, [newData, id])
         } else if (type == 'bio') {
             await pool.query(`
                 UPDATE users

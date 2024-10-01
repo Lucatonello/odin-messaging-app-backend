@@ -1,8 +1,22 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path')
 const pool = require('../db/pool');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, '../uploads')); 
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)); 
+    },
+});
+
+const upload = multer({ storage: storage });
 
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
@@ -57,8 +71,8 @@ function verifyToken(req, res, next) {
     }
 }
 
-router.post('/signup', async (req, res) => {
-    const { username, password } = req.body;
+router.post('/signup', upload.single('pfp'), async (req, res) => {
+    const { username, password, bio } = req.body;
     if (!password) {
         console.log('Password is indeed undefined. Username: ', username);
     }
@@ -69,7 +83,11 @@ router.post('/signup', async (req, res) => {
             return res.status(400).send('Username already exists');
         }
 
-        await pool.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hashedPassword]);
+         const profilePicturePath = req.file 
+            ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`
+            : `${req.protocol}://${req.get('host')}/uploads/user.png`;
+
+        await pool.query('INSERT INTO users (username, password, bio, profilepic) VALUES ($1, $2, $3, $4)', [username, hashedPassword, bio, profilePicturePath]);
         res.json({ message: 'Cool, now log in' });
 
     } catch (err) {
