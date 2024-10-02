@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/pool');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 const { verifyToken } = require('./users');
 
 router.get('/', verifyToken, async (req, res) => {
@@ -120,10 +122,13 @@ router.post('/getReceiverId', verifyToken, async (req, res) => {
    
 });
 
-router.put('/editData/:id', verifyToken, async (req, res) => {
+router.put('/editData/:id', verifyToken, upload.single('pfp'), async (req, res) => {
     const id = req.params.id;
     const type = req.body.type;
     const newData = req.body.newData;
+    const file = req.file
+
+    console.log('type: ', type);
 
     try {
         if (type == 'username') {
@@ -138,6 +143,18 @@ router.put('/editData/:id', verifyToken, async (req, res) => {
                 SET bio = $1
                 WHERE id = $2
             `, [newData, id])
+        } else if (type == 'pfp') {
+            const profilePicPath = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`
+
+            await pool.query(`
+                UPDATE users
+                SET profilepic = $1
+                WHERE id = $2
+            `, [profilePicPath, id]);
+
+            res.json({ message: 'pfp updated', profilePicPath});
+        } else {
+            res.status(400).json({ error: 'type of change not valid' });
         }
     } catch (err) {
         console.error(err)
