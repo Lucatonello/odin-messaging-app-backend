@@ -6,18 +6,39 @@ const { verifyToken } = require('./users');
 router.get('/', verifyToken, async (req, res) => {
     const senderid = req.user.id;
 
-    // const pfp = await pool.query('SELECT profilepic FROM users WHERE id = $1', [senderid]);
     const contacts = await pool.query(`
-        SELECT DISTINCT users.id, users.username, users.profilepic FROM users
+        SELECT DISTINCT 
+        users.id, 
+        users.username, 
+        users.profilepic, 
+        sender.profilepic AS sender_profilepic
+        FROM users
         JOIN messages ON users.id = messages.recieverid
+        JOIN users AS sender ON sender.id = messages.senderid
         WHERE messages.senderid = $1
+
         UNION
-        SELECT users.id, users.username, users.profilepic FROM users
+
+        SELECT 
+        users.id, 
+        users.username, 
+        users.profilepic, 
+        sender.profilepic AS sender_profilepic
+        FROM users
         JOIN messages ON users.id = messages.senderid
-        WHERE messages.recieverid = $1
+        JOIN users AS sender ON sender.id = messages.recieverid
+        WHERE messages.recieverid = $1;
+
     `, [senderid]);
 
-    res.json(contacts.rows);
+    const currentUserProfile = await pool.query(
+        `SELECT id, username, profilepic FROM users WHERE id = $1`, [senderid]
+    );
+
+    res.json({
+        contacts: contacts.rows,
+        currentUser: currentUserProfile.rows[0] 
+    });
 });
 
 router.get('/chat/:contactid', verifyToken, async (req, res) => {
