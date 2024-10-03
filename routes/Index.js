@@ -9,27 +9,47 @@ router.get('/', verifyToken, async (req, res) => {
     const senderid = req.user.id;
 
     const contacts = await pool.query(`
-        SELECT DISTINCT 
-        users.id, 
-        users.username, 
-        users.profilepic, 
-        sender.profilepic AS sender_profilepic
+        WITH combined_messages AS (
+        SELECT 
+            users.id, 
+            users.username, 
+            users.profilepic, 
+            sender.profilepic AS sender_profilepic, 
+            MAX(messages.sentat) AS last_interaction
         FROM users
         JOIN messages ON users.id = messages.recieverid
         JOIN users AS sender ON sender.id = messages.senderid
         WHERE messages.senderid = $1
+        GROUP BY users.id, users.username, users.profilepic, sender.profilepic
 
-        UNION
+        UNION ALL
 
         SELECT 
-        users.id, 
-        users.username, 
-        users.profilepic, 
-        sender.profilepic AS sender_profilepic
+            users.id, 
+            users.username, 
+            users.profilepic, 
+            sender.profilepic AS sender_profilepic, 
+            MAX(messages.sentat) AS last_interaction
         FROM users
         JOIN messages ON users.id = messages.senderid
         JOIN users AS sender ON sender.id = messages.recieverid
-        WHERE messages.recieverid = $1;
+        WHERE messages.recieverid = $1
+        GROUP BY users.id, users.username, users.profilepic, sender.profilepic
+    )
+    SELECT *
+    FROM (
+        SELECT 
+            id, 
+            username, 
+            profilepic, 
+            sender_profilepic, 
+            last_interaction,
+            ROW_NUMBER() OVER (PARTITION BY id ORDER BY last_interaction DESC) AS rn
+        FROM combined_messages
+    ) AS ranked_messages
+    WHERE rn = 1
+    ORDER BY last_interaction DESC;
+
 
     `, [senderid]);
 
