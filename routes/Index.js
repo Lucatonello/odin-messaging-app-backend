@@ -247,4 +247,21 @@ router.get('/getUserGroupChats/:id', verifyToken, async (req, res) => {
     }
 });
 
+router.get('/groupChat/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        const result = await pool.query(`
+            SELECT * 
+            FROM groupChatMessages
+            WHERE groupchatid = $1    
+        `, [id]);
+
+        res.json(result.rows)
+    } catch (err) {
+        console.error(err);
+        res.status(500).json('Error getting group data'); 
+    }
+});
+
 module.exports = router;
