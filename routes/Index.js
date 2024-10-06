@@ -215,4 +215,36 @@ router.post('/createGroupChat/:id', verifyToken, async (req, res) => {
     }
 });
 
+router.get('/getUserGroupChats/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    let username;
+    try {
+        const getUsername = await pool.query('SELECT username FROM users WHERE id = $1', [id]);
+        if (getUsername) {
+            username = getUsername.rows[0].username;
+        }
+
+        const result = await pool.query(`
+            SELECT 
+                gc.id, 
+                gc.name, 
+                gc.description, 
+                gc.members, 
+                gc.admin, 
+                array_agg(u.profilepic ORDER BY array_position(gc.members, u.username)) AS profilepics,
+                array_agg(u.username ORDER BY array_position(gc.members, u.username)) AS usernames
+            FROM groupchats gc
+            JOIN unnest(gc.members) AS member ON true
+            JOIN users u ON u.username = member
+            WHERE $1 = ANY(gc.members)
+            GROUP BY gc.id, gc.name, gc.description, gc.members, gc.admin
+        `, [username]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error fetching group chats' });
+    }
+});
+
 module.exports = router;
