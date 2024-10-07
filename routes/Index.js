@@ -252,8 +252,9 @@ router.get('/groupChat/:id', verifyToken, async (req, res) => {
 
     try {
         const result = await pool.query(`
-            SELECT * 
-            FROM groupChatMessages
+            SELECT gcm.*, u.username 
+            FROM groupChatMessages gcm
+            JOIN users u ON gcm.senderid = u.id
             WHERE groupchatid = $1    
         `, [id]);
 
@@ -261,6 +262,51 @@ router.get('/groupChat/:id', verifyToken, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json('Error getting group data'); 
+    }
+});
+
+router.post('/newGroupChatMessage/:id', verifyToken, async (req, res) => {
+    const groupId = req.params.id;
+    const newMessage = req.body.newMessage;
+    const userId = req.body.userId;
+
+    try {
+        await pool.query(`
+            INSERT INTO groupChatMessages
+            (text, senderid, groupchatid)
+            VALUES ($1, $2, $3)    
+        `, [newMessage, userId, groupId]);
+
+        res.json({ message: 'message sent succesfully' })
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'error inserting message in database' })
+    }
+});
+
+router.get('/groupChatInfo/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    try {
+        const result = await pool.query(`
+            SELECT 
+                gc.id, 
+                gc.name, 
+                gc.description, 
+                gc.members, 
+                gc.admin, 
+                array_agg(u.profilepic ORDER BY array_position(gc.members, u.username)) AS profilepics,
+                array_agg(u.username ORDER BY array_position(gc.members, u.username)) AS usernames
+            FROM groupchats gc
+            JOIN unnest(gc.members) AS member ON true
+            JOIN users u ON u.username = member
+            WHERE gc.id = $1
+            GROUP BY gc.id, gc.name, gc.description, gc.members, gc.admin
+        `, [id]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error fetching metadata' });
     }
 });
 
