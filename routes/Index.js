@@ -295,7 +295,8 @@ router.get('/groupChatInfo/:id', verifyToken, async (req, res) => {
                 gc.members, 
                 gc.admin, 
                 array_agg(u.profilepic ORDER BY array_position(gc.members, u.username)) AS profilepics,
-                array_agg(u.username ORDER BY array_position(gc.members, u.username)) AS usernames
+                array_agg(u.username ORDER BY array_position(gc.members, u.username)) AS usernames,
+                array_agg(u.id ORDER BY array_position(gc.members, u.username)) AS ids
             FROM groupchats gc
             JOIN unnest(gc.members) AS member ON true
             JOIN users u ON u.username = member
