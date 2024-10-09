@@ -311,4 +311,30 @@ router.get('/groupChatInfo/:id', verifyToken, async (req, res) => {
     }
 });
 
+router.put('/editGroupData/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    const type = req.body.type;
+    const newData = req.body.newData;
+
+    try {
+        if (type == 'name') {
+            await pool.query(`
+                UPDATE groupchats
+                SET name = $1
+                WHERE id = $2
+            `, [newData, id])
+        } else if (type == 'description') {
+            await pool.query(`
+                UPDATE groupchats
+                SET description = $1
+                WHERE id = $2
+            `, [newData, id])
+        } else {
+            res.status(400).json({ error: 'type of change not valid' });
+        }
+    } catch (err) {
+        console.error(err)
+    }
+});
+
 module.exports = router;
