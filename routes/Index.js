@@ -126,7 +126,7 @@ router.get('/profiles/:id', verifyToken, async (req, res) => {
         
         res.send(result.rows);
     } catch (err) {
-        console.log(err);
+        console.error(err);
     }
 });
 
@@ -147,8 +147,6 @@ router.put('/editData/:id', verifyToken, upload.single('pfp'), async (req, res) 
     const type = req.body.type;
     const newData = req.body.newData;
     const file = req.file
-
-    console.log('type: ', type);
 
     try {
         if (type == 'username') {
@@ -332,6 +330,20 @@ router.put('/editGroupData/:id', verifyToken, async (req, res) => {
         } else {
             res.status(400).json({ error: 'type of change not valid' });
         }
+    } catch (err) {
+        console.error(err)
+    }
+});
+
+router.put('/deleteGroupMember/:id/:member', verifyToken, async (req, res) => {
+    const member = req.params.member;
+    const id = req.params.id
+    try {
+        await pool.query(`
+            UPDATE groupchats
+            SET members = array_remove(members, $1)
+            WHERE id = $2
+        `, [member, id])
     } catch (err) {
         console.error(err)
     }

@@ -75,7 +75,7 @@ function verifyToken(req, res, next) {
 router.post('/signup', upload.single('pfp'), async (req, res) => {
     const { username, password, bio } = req.body;
     if (!password) {
-        console.log('Password is indeed undefined. Username: ', username);
+        return res.status(400).send('Password can not be blank');
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     try {
