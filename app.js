@@ -3,7 +3,7 @@ const path = require('path')
 const app = express();
 const { Pool } = require('pg');
 const cors = require('cors');
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 const indexRoute = require('./routes/index');
 const { router } = require('./routes/users');
 

@@ -85,8 +85,8 @@ router.post('/signup', upload.single('pfp'), async (req, res) => {
         }
 
          const profilePicturePath = req.file 
-            ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`
-            : `${req.protocol}://${req.get('host')}/uploads/user.png`;
+            ? `http://${req.get('host')}/uploads/${req.file.filename}`
+            : `http://${req.get('host')}/uploads/user.png`;
 
         await pool.query('INSERT INTO users (username, password, bio, profilepic) VALUES ($1, $2, $3, $4)', [username, hashedPassword, bio, profilePicturePath]);
         res.json({ message: 'Cool, now log in' });

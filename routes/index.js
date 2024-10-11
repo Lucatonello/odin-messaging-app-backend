@@ -132,8 +132,10 @@ router.get('/profiles/:id', verifyToken, async (req, res) => {
 
 router.post('/getReceiverId', verifyToken, async (req, res) => {
     const receiverName = req.body.receiver;
+    console.log('receiverName', receiverName);
     try {
         const result = await pool.query(`SELECT id FROM users WHERE username = $1`, [receiverName]);
+        console.log('result rows', result.rows);
         const receiverId = result.rows[0].id;
         res.json({ id: receiverId });
     } catch (err) {
