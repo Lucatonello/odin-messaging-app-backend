@@ -1,4 +1,4 @@
-# odin-messaging-app-backendv
+# odin-messaging-app-backend
 
 ## Overview
 This repository contains the backend code for the [**Odin Messaging App**](https://github.com/Lucatonello/odin-messaging-app-frontend-), a web-based application that allows users to send and receive private messages and group chat messages in real-time. The backend is built with Node.js and Express, providing a robust and scalable solution for handling user data and messaging functionalities.
