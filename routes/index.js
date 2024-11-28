@@ -108,6 +108,8 @@ router.post('/newMessage/:senderid/:receiverid', verifyToken, async (req, res) =
             VALUES ($1, $2, $3)
         `, [newMessage, senderid, receiverid]);
 
+        res.json({ isDone: true });
+
     } catch (err) {
         console.error(err)
         res.status(500).json({ error: 'Server error' });;
@@ -137,7 +139,7 @@ router.post('/getReceiverId', verifyToken, async (req, res) => {
         const result = await pool.query(`SELECT id FROM users WHERE username = $1`, [receiverName]);
         console.log('result rows', result.rows);
         const receiverId = result.rows[0].id;
-        res.json({ id: receiverId });
+        res.json({ id: receiverId, isDone: true });
     } catch (err) {
         console.error(err);
     }
@@ -172,7 +174,7 @@ router.put('/editData/:id', verifyToken, upload.single('pfp'), async (req, res) 
                 WHERE id = $2
             `, [profilePicPath, id]);
 
-            res.json({ message: 'pfp updated', profilePicPath});
+            res.json({ message: 'pfp updated', profilePicPath, isDone: true });
         } else {
             res.status(400).json({ error: 'type of change not valid' });
         }
@@ -208,7 +210,7 @@ router.post('/createGroupChat/:id', verifyToken, async (req, res) => {
           VALUES ($1, $2, $3, $4)    
       `, [name, description, members, adminUsername]);
 
-      res.json({ message: 'group chat created succesfully' })
+      res.json({ message: 'group chat created succesfully', isDone: true })
     } catch(err) {
         console.error(err)
         res.status(500).json({ message: 'Error creating groupchat' });
@@ -277,7 +279,7 @@ router.post('/newGroupChatMessage/:id', verifyToken, async (req, res) => {
             VALUES ($1, $2, $3)    
         `, [newMessage, userId, groupId]);
 
-        res.json({ message: 'message sent succesfully' })
+        res.json({ isDone: true })
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'error inserting message in database' })
