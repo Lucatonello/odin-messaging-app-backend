@@ -9,7 +9,13 @@ const { router } = require('./routes/users');
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use(cors());
+const allowedOrigins = ['https://odin-messaging-app-frontend.netlify.app', 'http://localhost:3000'];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true,
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
